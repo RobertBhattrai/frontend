@@ -4,25 +4,24 @@ import LandingHeader from '../components/LandingHeader';
 import Footer from '../components/Footer';
 import section_top_img from '../assets/other/heading-line-dec.png';
 import home_design from '../assets/images/landingpage.png';
-import bg_design from '../assets/images/bgimg.avif';
-import home1 from '../assets/images/home1.png';
+import bg_design from '../assets/images/bgimg.jpg';
+import home1 from '../assets/images/home2.svg';
 import AnimatedButton from "../components/Button";
 
 const Landing = () => {
   return (
     <>
     <LandingHeader/>
-    <section id="main" className=''>
+    <section id="main" className='h-screen flex justify-center items-center' style={{backgroundImage: `url(${bg_design})`, backgroundSize: 'cover', backgroundPositionY: '30%'}}>
     {/* <img src={home_design} alt="" className=''/> */}
-    <div className="flex justify-center items-center space-x-1 h-screen bg-right, bg-fixed text-white text-center bg-no-repeat"
-    style={{backgroundImage: `url(${bg_design})`, backgroundSize: 'auto 150%'}}>
+    <div className="flex justify-center gap-5 space-x-6 items-end">
 
-      <div><img src={home1} alt="" /></div>
-      <div className="max-w-lg p-6 bg-white bg-opacity-50 text-black rounded-lg">
-        <h1 className="text-4xl font-bold mb-6">
-          <span className='text-blue-600'>Donate</span> Blood, <span className='text-red-600'>Save</span> Lives, Connect Hope!
+
+      <div className="max-w-lg p-6 bg-white bg-opacity-0 text-black rounded-lg">
+        <h1 className="text-4xl mb-10 font-extrabold">
+          <span className='text-blue-600'>Donate</span> Blood, <span className='text-red-600'>Save</span> Lives, Connect <span className='text-green-600'>Hope</span>!
         </h1>
-        <p>Every drop counts! Join our blood donation community and make a difference. Whether you're in need of blood or want to save lives by donating, Lifeline Connect is here to bridge the gap. Register now and help someone in need today!</p>
+        <p className='text-center pt-4'>Every drop counts! Join our blood donation community and make a difference. Whether you're in need of blood or want to save lives by donating, <span className='font-medium'>100% free, direct blood donation from donor to recipient.</span> Register now and help someone in need today!</p>
         <div className="flex gap-10 justify-center mt-10">
           <Link
             to="/register"
@@ -39,10 +38,11 @@ const Landing = () => {
           </Link>
         </div>
       </div>
+      <div className='max-w-lg'><img src={home1} alt="" className='h-96'/></div>
       </div>
     </section>
 
-    <section id="services" className="px-4 md:px-6 lg:px-20 py-16 bg-gray-200">
+    <section id="about" className="h-[90vh] px-4 md:px-6 lg:px-20 py-16 bg-gray-200">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
           <h4 className="text-3xl font-bold mb-4">

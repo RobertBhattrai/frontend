@@ -17,7 +17,7 @@ const ScrollWatcher = () => {
 
   return (
     <div
-      className="fixed top-0 left-0 h-[4px] bg-red-700 z-[1000] origin-left"
+      className="sticky top-0 left-0 h-[4px] bg-red-700 z-[1000] origin-left"
       style={{ width: `${scrollProgress}%` }}
     />
   );

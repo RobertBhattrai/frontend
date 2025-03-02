@@ -15,7 +15,7 @@ const Header = () => {
             <div className="flex items-center justify-between mt-2">
               {/* Logo */}
               <a href="index.html" className="flex items-center">
-                <img src={logo} alt="raktadan" className="h-12" />
+                <img src={logo} alt="raktadan" className="h-13" />
               </a>
               
               {/* Navigation Menu */}
