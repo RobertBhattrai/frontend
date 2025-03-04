@@ -15,3 +15,48 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+#root {
+  /* max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center; */
+  /* font-family: */
+  font-family:'Roboto', sans-serif;
+}
+html{
+  scroll-behavior:smooth;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+.teko-font {
+  font-family: "Teko", sans-serif;
+  font-optical-sizing: auto;
+  /* font-weight: 100; */
+  /* font-style: normal; */
+}
+
+ /*  Wave divider */
+ .wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+
+.wave svg {
+  position: relative;
+  display: block;
+  width: calc(300% + 1.3px);
+  height: 500px;
+}
+
+.wave .shape-fill {
+  fill: #DAEEEB;
+}

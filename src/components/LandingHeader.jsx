@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/images/logo.png';
 import header_design from '../assets/images/landingpage.png';
 import ScrollWatcher from './ScrollWatcher';
+import  './Header.css';
 
 
 const LandingHeader = () => {
@@ -12,7 +13,7 @@ const LandingHeader = () => {
           <div className="container">
             <div className="flex items-start justify-around">
               {/* Logo */}
-              <a href="index.html" className="flex items-center">
+              <a href="/" className="flex items-center">
                 <img src={logo} alt="raktadan" className="h-14" />
               </a>
               

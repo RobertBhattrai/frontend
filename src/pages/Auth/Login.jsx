@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import bg_design from 'D:/SYP/frontend/src/assets/images/registerimg.jpg';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +12,8 @@ const Login = () => {
   };
 
   return (
+    <>
+    <div className='' style={{backgroundImage: `url(${bg_design})`}}></div>
     <div className="flex justify-center items-center h-screen bg-gradient-to-r from-yellow-400 to-red-500">
       <form
         onSubmit={handleSubmit}
@@ -53,6 +56,7 @@ const Login = () => {
         </button>
       </form>
     </div>
+    </>
   );
 };
 
