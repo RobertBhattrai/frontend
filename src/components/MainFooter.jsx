@@ -1,21 +1,10 @@
 import React from 'react';
 
-const Footer = () => {
+const MainFooter = () => {
   return (
     
 
-<footer class="bg-[#DAEEEB] dark:bg-gray-900 relative">
-<div class="wave-ft">
-    <svg class="svg-ft" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-        <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill"></path>
-        <defs><linearGradient id="grad1" x1="100%" y1="0%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="rgba(52,199,164,1)" />
-      <stop offset="25%" stop-color="rgba(96,228,197,1)" />
-      <stop offset="65%" stop-color="rgba(116,245,189,1)" />
-      <stop offset="100%" stop-color="rgba(58,199,166,1)" />
-    </linearGradient></defs>
-    </svg>
-    </div>
+<footer class="bg-[#DAEEEB] dark:bg-gray-900">
     <div class="mx-auto w-full max-w-screen-xl pt-40">
       <div class="grid grid-cols-2 gap-8 px-8 py-8 lg:py-8 md:grid-cols-4   justify-items-center">
         <div >
@@ -66,14 +55,20 @@ const Footer = () => {
                 </li>
             </ul>
         </div>
-        <div className=''>
-            <h2 class="mb-6 text-sm font-semibold text-gray-900 uppercase dark:text-white">Developer Team</h2>
+        <div>
+            <h2 class="mb-6 text-sm font-semibold text-gray-900 uppercase dark:text-white">Download</h2>
             <ul class="text-gray-500 dark:text-gray-400 font-medium">
                 <li class="mb-4">
-                    <a href="#" class="hover:underline">Safal Bhattarai</a>
+                    <a href="#" class="hover:underline">iOS</a>
                 </li>
                 <li class="mb-4">
-                    <a href="#" class="hover:underline">Robert Bhattarai</a>
+                    <a href="#" class="hover:underline">Android</a>
+                </li>
+                <li class="mb-4">
+                    <a href="#" class="hover:underline">Windows</a>
+                </li>
+                <li class="mb-4">
+                    <a href="#" class="hover:underline">MacOS</a>
                 </li>
             </ul>
         </div>
@@ -119,4 +114,4 @@ const Footer = () => {
   );
 };
 
-export default Footer;
+export default MainFooter;

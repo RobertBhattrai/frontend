@@ -64,7 +64,7 @@ const Landing = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-10 mt-8 px-20">
+      <div className="grid md:grid-cols-3 gap-10 mt-8 px-20 pb-20">
           {features.map((feature, index) => (
             <div key={index} className="bg-white p-6 rounded-full shadow-md hover:shadow-lg transition text-center">
               <div className="text-5xl">{feature.icon}</div>

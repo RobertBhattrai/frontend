@@ -39,8 +39,7 @@ html{
   /* font-style: normal; */
 }
 
- /*  Wave divider */
- .wave {
+.wave-ft {
   position: absolute;
   top: 0;
   left: 0;
@@ -50,13 +49,13 @@ html{
   transform: rotate(180deg);
 }
 
-.wave svg {
+.wave-ft .svg-ft {
   position: relative;
   display: block;
-  width: calc(300% + 1.3px);
-  height: 500px;
+  width: calc(100% + 1.3px);
+  height: 100px;
 }
 
-.wave .shape-fill {
-  fill: #DAEEEB;
+.wave-ft .shape-fill {
+  fill: url(#grad1)
 }
