@@ -1,10 +1,10 @@
-import React, { useState, useContext } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import img from '../../assets/images/registerbg.jpg';
 import logo from '../../assets/images/logo.png';
 import '../../components/Header.css';
-import { UserContext } from '../../context/UserContext'; // Import UserContext
+import { useUser } from '../../context/UserContext'; // Changed to useUser hook
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -16,7 +16,7 @@ const Login = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [showPassword, setShowPassword] = useState(false);
 
-  const { setUser } = useContext(UserContext); // Use setUser from UserContext
+  const { login } = useUser(); // Using login function from UserContext
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -50,38 +50,20 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/login', formData);
-
-      if (response.status === 200) {
+      // Use the login function from UserContext instead of direct axios call
+      const result = await login(formData, `/${formData.username}/home`);
+      
+      if (result.success) {
         setMessage({ type: 'success', text: 'Login successful!' });
-
-        // Store user details in context
-        setUser(response.data.user);
-
-        // Redirect to the user's home page after a short delay
-        setTimeout(() => {
-          navigate(`/${response.data.user.username}/home`);
-        }, 1000);
+        // Redirect is handled by the UserContext after successful login
       } else {
-        setMessage({ type: 'error', text: response.data.message || 'Login failed' });
+        setMessage({ type: 'error', text: result.error || 'Login failed' });
       }
     } catch (error) {
-      if (error.response) {
-        setMessage({
-          type: 'error',
-          text: error.response.data.message || 'An error occurred. Please try again.',
-        });
-      } else if (error.request) {
-        setMessage({
-          type: 'error',
-          text: 'Network error. Please check your internet connection.',
-        });
-      } else {
-        setMessage({
-          type: 'error',
-          text: 'An unexpected error occurred. Please try again.',
-        });
-      }
+      setMessage({
+        type: 'error',
+        text: error.message || 'An unexpected error occurred. Please try again.',
+      });
     } finally {
       setIsLoading(false);
     }

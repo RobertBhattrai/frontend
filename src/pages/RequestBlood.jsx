@@ -20,8 +20,8 @@ const RequestBlood = () => {
 
     // Auto-fill contact number if available in user context
     useEffect(() => {
-        if (user?.phone) {
-            setFormData((prev) => ({ ...prev, contactNumber: user.phone }));
+        if (user?.contactNumber) {
+            setFormData((prev) => ({ ...prev, contactNumber: user.contactNumber }));
         }
     }, [user]);
 
@@ -51,12 +51,19 @@ const RequestBlood = () => {
             return;
         }
     
-        const newRequest = { ...formData, requestedBy: user?.name };
+        const newRequest = { 
+            ...formData, 
+            requestedBy: user?.username // Changed from user.name to user.username
+        };
     
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('http://localhost:5000/api/blood-requests', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(newRequest),
             });
     
@@ -64,7 +71,7 @@ const RequestBlood = () => {
     
             if (response.ok) {
                 setMessage("Blood request submitted successfully!");
-                setTimeout(() => navigate('/'), 2000);
+                setTimeout(() => navigate(`/${user?.username}/home`), 2000); // Changed to username
             } else {
                 setMessage(data.message || "Failed to submit request. Try again.");
             }
@@ -76,7 +83,8 @@ const RequestBlood = () => {
     };
     
     return (
-        <section className="min-h-screen flex items-center justify-center bg-gray-100">
+
+        <section className="min-h-screen flex items-center justify-center py-5" style={{backgroundColor:'#3cd1ae', background: 'linear-gradient(90deg, rgba(52,199,164,1) 0%, rgba(96,228,197,1) 25%, rgba(116,245,189,1) 65%, rgba(58,199,166,1) 100%)'}}>
             <div className="max-w-4xl w-full bg-white shadow-lg rounded-2xl p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">Request Blood</h1>
                 {message && (

@@ -13,11 +13,13 @@ import { UserProvider } from './context/UserContext';
 import RequestBlood from "./pages/RequestBlood";
 import MyRequest from "./pages/MyRequest";
 import EditRequest from "./pages/EditRequest";
+import EditProfile from "./pages/EditProfile";
 
 const App = () => {
   return (
-    <UserProvider>
+    // <UserProvider>
       <Router>
+      <UserProvider>
         <main>
           <Routes>
             {/* Landing page route */}
@@ -32,12 +34,14 @@ const App = () => {
               <Route path="home" element={<Home />} />
               <Route path="request" element={<RequestBlood />} />
               <Route path="myrequests" element={<MyRequest />} />
-              <Route path="edit-request/:id" element={<EditRequest />} /> {/* For editing blood requests */}
+              <Route path="my-requests/edit/:id" element={<EditRequest />} />
+              <Route path="profile" element={<EditProfile />} />
             </Route>
           </Routes>
         </main>
+        </UserProvider>
       </Router>
-    </UserProvider>
+    // </UserProvider>
   );
 };
 

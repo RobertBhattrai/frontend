@@ -51,20 +51,31 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
+  
     setIsLoading(true);
     try {
-      // Use Axios to send POST request
-      const response = await axios.post("http://localhost:5000/api/register", formData);
-
+      const response = await axios.post("http://localhost:5000/api/auth/register", formData);
+  
       if (response.status === 201) {
+        // Store the token and user data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
         setMessage({ type: "success", text: "Registration successful!" });
-        setIsModalVisible(true); // Show the modal on success
+        setIsModalVisible(true);
+        
+        // Optional: Redirect after successful registration
+        setTimeout(() => {
+          navigate(`/${response.data.user.username}/home`);
+        }, 2000);
       } else {
         setMessage({ type: "error", text: response.data.message || "Registration failed" });
       }
     } catch (error) {
-      setMessage({ type: "error", text: error.response?.data?.message || "An error occurred. Please try again." });
+      setMessage({ 
+        type: "error", 
+        text: error.response?.data?.message || "An error occurred. Please try again." 
+      });
     } finally {
       setIsLoading(false);
     }
