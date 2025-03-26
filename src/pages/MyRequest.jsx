@@ -2,26 +2,81 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
 import Spinner from '../components/Spinner';
+import DonorDetailsModal from '../components/DonorDetailsModal';
+
+const NotificationBell = ({ count = 0, onClick }) => {
+  return (
+    <div className="relative cursor-pointer" onClick={onClick}>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        className="h-6 w-6" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+      >
+        <path 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          strokeWidth={2} 
+          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
+        />
+      </svg>
+      {count > 0 && (
+        <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+          {count > 9 ? '9+' : count}
+        </span>
+      )}
+    </div>
+  );
+};
 
 const MyRequest = () => {
     const { user } = useContext(UserContext);
     const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
+    const [donations, setDonations] = useState([]);
+    const [notifications, setNotifications] = useState([]);
     const [message, setMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [selectedDonation, setSelectedDonation] = useState(null);
+    const [showDonorModal, setShowDonorModal] = useState(false);
 
-    // Fetch blood requests made by the logged-in user
+    // Fetch all data
     useEffect(() => {
-        if (!user?.username) return;
+        if (!user?.username || !user?._id) return;
     
-        const fetchRequests = async () => {
+        const fetchData = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/my-request/${encodeURIComponent(user.username)}`);
-                const data = await response.json();
-                if (response.ok) {
-                    setRequests(data);
+                setIsLoading(true);
+                
+                // Fetch requests
+                const requestsResponse = await fetch(`http://localhost:5000/api/my-request/${user.username}`);
+                const requestsData = await requestsResponse.json();
+                
+                if (requestsResponse.ok) {
+                    setRequests(requestsData);
+                    
+                    // Fetch donations for fulfilled requests
+                    const fulfilledRequests = requestsData.filter(req => req.status === 'fulfilled');
+                    if (fulfilledRequests.length > 0) {
+                        const donationsResponse = await fetch(
+                            `http://localhost:5000/api/donations?requestIds=${fulfilledRequests.map(req => req._id).join(',')}`
+                        );
+                        if (donationsResponse.ok) {
+                            const donationsData = await donationsResponse.json();
+                            setDonations(donationsData);
+                        }
+                    }
+                    
+                    // Fetch notifications
+                    const notificationsResponse = await fetch(`http://localhost:5000/api/notifications/${user._id}`);
+                    if (notificationsResponse.ok) {
+                        const notificationsData = await notificationsResponse.json();
+                        setNotifications(notificationsData);
+                    }
                 } else {
-                    setMessage(data.message || "Failed to fetch requests.");
+                    setMessage(requestsData.message || "Failed to fetch data.");
                 }
             } catch (error) {
                 setMessage("Error: " + error.message);
@@ -30,11 +85,42 @@ const MyRequest = () => {
             }
         };
     
-        fetchRequests();
-    }, [user?.username]);
+        fetchData();
+    }, [user?.username, user?._id]);
+
+    // Fetch donation details for modal
+    const fetchDonationDetails = async (donationId) => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/donations/${donationId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSelectedDonation(data);
+          setShowDonorModal(true);
+        }
+      } catch (error) {
+        console.error('Error fetching donation:', error);
+        setMessage('Failed to load donor details');
+      }
+    };
+
+    // Handle notification click
+    const handleNotificationClick = async (notification) => {
+      try {
+        // Mark as read
+        await markNotificationAsRead(notification._id);
+        setShowNotifications(false);
+        
+        // If notification has a donationId, show donor details
+        if (notification.donationId) {
+          await fetchDonationDetails(notification.donationId);
+        }
+      } catch (error) {
+        console.error('Error handling notification:', error);
+      }
+    };
 
     // Handle delete request
-    const handleDelete = async (requestId) => { // Accept request ID
+    const handleDelete = async (requestId) => {
         try {
             const response = await fetch(`http://localhost:5000/api/my-request/delete/${requestId}`, {
                 method: 'DELETE',
@@ -44,18 +130,72 @@ const MyRequest = () => {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
     
-            alert("Request deleted successfully!");
-            // Refresh the request list after deletion
+            setMessage("Request deleted successfully!");
             setRequests(requests.filter(request => request._id !== requestId));
         } catch (error) {
             console.error("Delete error:", error);
-            alert("Error: Failed to delete request.");
+            setMessage("Error: Failed to delete request.");
         }
     };
 
     // Handle edit request
     const handleEdit = (id) => {
         navigate(`/${user.username}/my-requests/edit/${id}`);
+    };
+
+    // Handle status update
+    const handleStatusUpdate = async (id, newStatus) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/my-request/status/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const updatedRequest = await response.json();
+            setRequests(requests.map(request => 
+                request._id === id ? updatedRequest.request : request
+            ));
+            setMessage("Status updated successfully!");
+        } catch (error) {
+            console.error("Status update error:", error);
+            setMessage("Error: Failed to update status.");
+        }
+    };
+
+    // Get donor info for a request
+    const getDonorInfo = (requestId) => {
+        const donation = donations.find(d => d.request === requestId);
+        if (!donation) return null;
+        
+        return {
+            name: donation.donor?.name || 'Anonymous Donor',
+            contact: donation.donor?.contact || 'Contact information not shared',
+            donationDate: new Date(donation.donationDate).toLocaleDateString()
+        };
+    };
+
+    // Mark notification as read
+    const markNotificationAsRead = async (notificationId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+                method: 'PUT'
+            });
+            
+            if (response.ok) {
+                setNotifications(notifications.map(n => 
+                    n._id === notificationId ? {...n, read: true} : n
+                ));
+            }
+        } catch (error) {
+            console.error("Error marking notification as read:", error);
+        }
     };
 
     if (isLoading) {
@@ -69,18 +209,51 @@ const MyRequest = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-10">
-                    <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                        My Blood Requests
-                    </h1>
-                    <p className="mt-3 text-xl text-gray-500">
-                        Manage your blood donation requests
-                    </p>
+                <div className="flex justify-between items-center mb-10">
+                    <div>
+                        <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                            My Blood Requests
+                        </h1>
+                        <p className="mt-3 text-xl text-gray-500">
+                            Manage your blood donation requests
+                        </p>
+                    </div>
+                    <div className="relative">
+                        <NotificationBell 
+                            count={notifications.filter(n => !n.read).length} 
+                            onClick={() => setShowNotifications(!showNotifications)}
+                        />
+                        {showNotifications && (
+                            <div className="absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg overflow-hidden z-10">
+                                <div className="py-1">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-2 text-sm text-gray-700">No notifications</div>
+                                    ) : (
+                                        notifications.map(notification => (
+                                            <div
+                                                key={notification._id}
+                                                onClick={() => handleNotificationClick(notification)}
+                                                className={`px-4 py-2 text-sm cursor-pointer ${
+                                                    notification.read ? 'bg-gray-50' : 'bg-blue-50'
+                                                } hover:bg-gray-100`}
+                                            >
+                                                <div className="font-medium">{notification.title}</div>
+                                                <div className="text-gray-600 truncate">{notification.message}</div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    {new Date(notification.createdAt).toLocaleString()}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {message && (
                     <div className={`mb-6 p-4 rounded-lg text-center ${
-                        message.startsWith("Request deleted") ? 
+                        message.includes("successfully") ? 
                         'bg-green-100 text-green-800' : 
                         'bg-red-100 text-red-800'
                     }`}>
@@ -143,16 +316,7 @@ const MyRequest = () => {
                                             Blood Group
                                         </th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Hospital
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Location
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Contact
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Urgency
+                                            Status/Donor Info
                                         </th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Actions
@@ -160,58 +324,73 @@ const MyRequest = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {requests.map((request) => (
-                                        <tr key={request._id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {request.patientName}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                    {request.bloodGroup}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {request.hospitalName}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {request.location}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {request.contactNumber}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    request.urgency === 'critical' ? 'bg-red-100 text-red-800' :
-                                                    request.urgency === 'urgent' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-green-100 text-green-800'
-                                                }`}>
-                                                    {request.urgency}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex space-x-2">
-                                                    <button
-                                                        onClick={() => handleEdit(request._id)}
-                                                        className="text-blue-600 hover:text-blue-900"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(request._id)}
-                                                        className="text-red-600 hover:text-red-900"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {requests.map((request) => {
+                                        const donorInfo = getDonorInfo(request._id);
+                                        return (
+                                            <tr key={request._id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {request.patientName}
+                                                    <div className="text-xs text-gray-500 mt-1">
+                                                        {request.hospitalName}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                        {request.bloodGroup}
+                                                    </span>
+                                                    <div className="text-xs text-gray-500 mt-1">
+                                                        {request.urgency === 'critical' ? '❗ Critical' : 
+                                                         request.urgency === 'urgent' ? '⚠️ Urgent' : 'Normal'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                        request.status === 'fulfilled' ? 'bg-green-100 text-green-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                        {request.status}
+                                                    </span>
+                                                    {donorInfo && (
+                                                        <div className="mt-2 text-xs">
+                                                            <div>Donor: {donorInfo.name}</div>
+                                                            <div>Date: {donorInfo.donationDate}</div>
+                                                            <div>Contact: {donorInfo.contact}</div>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={() => handleEdit(request._id)}
+                                                            className="text-blue-600 hover:text-blue-900 text-sm"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(request._id)}
+                                                            className="text-red-600 hover:text-red-900 text-sm"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Donor Details Modal */}
+            {showDonorModal && (
+                <DonorDetailsModal 
+                    donation={selectedDonation}
+                    onClose={() => setShowDonorModal(false)}
+                />
+            )}
         </div>
     );
 };

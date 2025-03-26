@@ -14,6 +14,7 @@ import RequestBlood from "./pages/RequestBlood";
 import MyRequest from "./pages/MyRequest";
 import EditRequest from "./pages/EditRequest";
 import EditProfile from "./pages/EditProfile";
+import DonatePage from "./pages/DonatePage";
 
 const App = () => {
   return (
@@ -36,6 +37,7 @@ const App = () => {
               <Route path="myrequests" element={<MyRequest />} />
               <Route path="my-requests/edit/:id" element={<EditRequest />} />
               <Route path="profile" element={<EditProfile />} />
+              <Route path="donate/:id" element={<DonatePage />} />
             </Route>
           </Routes>
         </main>

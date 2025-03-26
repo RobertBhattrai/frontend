@@ -28,32 +28,36 @@ export const UserProvider = ({ children }) => {
     }
     setIsLoading(false);
   }, []);
-
-  const login = async (formData, redirectPath = '/') => {
-    try {
+// In your UserContext.js
+const login = async (formData, redirectPath = '/') => {
+  try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
       });
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+          throw new Error(data.message || 'Login failed');
       }
       
+      // Store token and user data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Update context
       setUser(data.user);
-      navigate(redirectPath); // Redirect after successful login
+      navigate(redirectPath);
+      
       return { success: true, user: data.user };
-    } catch (error) {
+  } catch (error) {
       return { success: false, error: error.message };
-    }
-  };
+  }
+};
 
   const register = async (formData, redirectPath = '/') => {
     try {
