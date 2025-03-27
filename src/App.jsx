@@ -15,6 +15,8 @@ import MyRequest from "./pages/MyRequest";
 import EditRequest from "./pages/EditRequest";
 import EditProfile from "./pages/EditProfile";
 import DonatePage from "./pages/DonatePage";
+import RequestDetails from "./pages/RequestDetails";
+import MyDonations from "./pages/MyDonations";
 
 const App = () => {
   return (
@@ -38,6 +40,8 @@ const App = () => {
               <Route path="my-requests/edit/:id" element={<EditRequest />} />
               <Route path="profile" element={<EditProfile />} />
               <Route path="donate/:id" element={<DonatePage />} />
+              <Route path="request-details/:requestId" element={<RequestDetails />} />
+              <Route path="mydonations" element={<MyDonations />} />
             </Route>
           </Routes>
         </main>

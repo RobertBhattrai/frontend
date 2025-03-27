@@ -13,6 +13,8 @@ const EditRequest = () => {
         location: '',
         contactNumber: '',
         urgency: 'normal',
+        unitsRequired: 1,
+        additionalInfo: ''
     });
     const [message, setMessage] = useState({ text: '', type: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,14 +27,19 @@ const EditRequest = () => {
             setMessage({ text: '', type: '' });
             
             try {
-                const response = await fetch(`http://localhost:5000/api/blood-requests/${id}`);
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:5000/api/blood-requests/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.message || 'Failed to fetch request details');
                 }
                 
-                const { data } = await response.json();
+                const data = await response.json();
                 
                 // Pre-fill form with data from database
                 setFormData({
@@ -41,7 +48,9 @@ const EditRequest = () => {
                     hospitalName: data.hospitalName || '',
                     location: data.location || '',
                     contactNumber: data.contactNumber || '',
-                    urgency: data.urgency || 'normal'
+                    urgency: data.urgency || 'normal',
+                    unitsRequired: data.unitsRequired || 1,
+                    additionalInfo: data.additionalInfo || ''
                 });
                 
             } catch (error) {
@@ -52,7 +61,7 @@ const EditRequest = () => {
                 });
                 
                 if (error.message.includes('not found')) {
-                    setTimeout(() => navigate('/my-requests'), 2000);
+                    setTimeout(() => navigate(`${username}/home`), 2000);
                 }
             } finally {
                 setIsLoading(false);
@@ -66,9 +75,16 @@ const EditRequest = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        
+        // Validate unitsRequired is between 1-10
+        if (name === 'unitsRequired') {
+            const numValue = parseInt(value);
+            if (isNaN(numValue) || numValue < 1 || numValue > 10) return;
+        }
+        
         setFormData(prev => ({
             ...prev,
-            [name]: value,
+            [name]: name === 'unitsRequired' ? parseInt(value) : value,
         }));
     };
 
@@ -78,32 +94,38 @@ const EditRequest = () => {
         setIsSubmitting(true);
     
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(
-                `http://localhost:5000/api/my-request/edit/${id}`, 
+                `http://localhost:5000/api/blood-requests/${id}`, // Changed endpoint
                 {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify(formData),
                 }
             );
             
-            const data = await response.json();
-            
+            // Check if response is OK before parsing as JSON
             if (!response.ok) {
-                throw new Error(data.message || 'Failed to update request');
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to update request');
             }
+            
+            const data = await response.json();
             
             setMessage({
                 text: data.message || "Request updated successfully!",
                 type: 'success'
             });
-            setTimeout(() => navigate('/my-requests'), 1500);
+            setTimeout(() => navigate(`/${user?.username}/myrequests`), 1500);
         } catch (error) {
             console.error("Submit error:", error);
             setMessage({
-                text: error.message || "Failed to update request. Please try again later.",
+                text: error.message.includes('<!DOCTYPE html>') 
+                    ? "Failed to update request (server error)" 
+                    : error.message,
                 type: 'error'
             });
         } finally {
@@ -147,7 +169,7 @@ const EditRequest = () => {
                         <div className="flex justify-between items-center mb-6">
                             <h1 className="text-2xl font-bold text-gray-800">Edit Blood Request</h1>
                             <button 
-                                onClick={() => navigate('/my-requests')}
+                                onClick={() => navigate(`/${user?.username}/myrequests`)}
                                 className="text-sm text-blue-600 hover:text-blue-800"
                             >
                                 ← Back to My Requests
@@ -238,6 +260,20 @@ const EditRequest = () => {
                                 </div>
                                 
                                 <div className="space-y-1">
+                                    <label className="block text-sm font-medium text-gray-700">Units Required (1-10)</label>
+                                    <input
+                                        type="number"
+                                        name="unitsRequired"
+                                        min="1"
+                                        max="10"
+                                        value={formData.unitsRequired}
+                                        onChange={handleInputChange}
+                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-1">
                                     <label className="block text-sm font-medium text-gray-700">Urgency</label>
                                     <select
                                         name="urgency"
@@ -250,6 +286,18 @@ const EditRequest = () => {
                                         <option value="urgent">Urgent</option>
                                         <option value="critical">Critical</option>
                                     </select>
+                                </div>
+
+                                <div className="sm:col-span-2 space-y-1">
+                                    <label className="block text-sm font-medium text-gray-700">Additional Information</label>
+                                    <textarea
+                                        name="additionalInfo"
+                                        value={formData.additionalInfo}
+                                        onChange={handleInputChange}
+                                        rows="3"
+                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Any special requirements or notes for donors..."
+                                    />
                                 </div>
                             </div>
                             

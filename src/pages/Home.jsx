@@ -55,14 +55,22 @@ const Home = () => {
 
   // Filter requests based on active tab
   const filteredRequests = bloodRequests.filter(request => {
+    // First ensure the request is pending
+    if (request.status !== 'pending') return false;
+    
+    // Then apply the urgency filter if not showing 'all'
     if (activeTab === 'all') return true;
     return request.urgency === activeTab;
   });
 
   // Calculate stats
-  const totalRequests = bloodRequests.length;
+  const totalRequests = bloodRequests.filter(req => req.status === 'pending').length;
+
   const userRequests = bloodRequests.filter(req => req.requestedBy === username).length;
-  const urgentNeeds = bloodRequests.filter(req => req.urgency === 'critical').length;
+
+  const urgentNeeds = bloodRequests.filter(req => 
+    req.urgency === 'critical' && req.status === 'pending'
+  ).length;
 
   const handleLogout = () => {
     logout();
@@ -176,7 +184,7 @@ const Home = () => {
           
           <div 
             className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => navigate(`/${username}/requests`)}
+            onClick={() => navigate(`/${username}/myrequests`)}
           >
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-green-100 text-green-600">
@@ -289,7 +297,7 @@ const Home = () => {
 
                     <div className="mt-4 md:mt-0 md:ml-4 flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2">
                       <button
-                        onClick={() => navigate(`/request-details/${request._id}`)}
+                        onClick={() => navigate(`/${username}/request-details/${request._id}`)}
                         className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
                       >
                         View Details

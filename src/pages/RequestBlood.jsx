@@ -13,6 +13,8 @@ const RequestBlood = () => {
         location: '',
         contactNumber: '',
         urgency: 'normal',
+        unitsRequired: 1,  // New field with default value
+        additionalInfo: '' // New field
     });
     
     const [message, setMessage] = useState('');
@@ -33,9 +35,15 @@ const RequestBlood = () => {
             return;
         }
         
+        // Restrict unitsRequired to numbers between 1-10
+        if (name === "unitsRequired") {
+            const numValue = parseInt(value);
+            if (isNaN(numValue) || numValue < 1 || numValue > 10) return;
+        }
+        
         setFormData({
             ...formData,
-            [name]: value,
+            [name]: name === "unitsRequired" ? parseInt(value) : value,
         });
     };
     
@@ -53,7 +61,7 @@ const RequestBlood = () => {
     
         const newRequest = { 
             ...formData, 
-            requestedBy: user?.username // Changed from user.name to user.username
+            requestedBy: user?.username
         };
     
         try {
@@ -71,7 +79,7 @@ const RequestBlood = () => {
     
             if (response.ok) {
                 setMessage("Blood request submitted successfully!");
-                setTimeout(() => navigate(`/${user?.username}/home`), 2000); // Changed to username
+                setTimeout(() => navigate(`/${user?.username}/home`), 2000);
             } else {
                 setMessage(data.message || "Failed to submit request. Try again.");
             }
@@ -83,7 +91,6 @@ const RequestBlood = () => {
     };
     
     return (
-
         <section className="min-h-screen flex items-center justify-center py-5" style={{backgroundColor:'#3cd1ae', background: 'linear-gradient(90deg, rgba(52,199,164,1) 0%, rgba(96,228,197,1) 25%, rgba(116,245,189,1) 65%, rgba(58,199,166,1) 100%)'}}>
             <div className="max-w-4xl w-full bg-white shadow-lg rounded-2xl p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">Request Blood</h1>
@@ -162,6 +169,34 @@ const RequestBlood = () => {
                             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                             required
                             maxLength={10}
+                        />
+                    </div>
+
+                    {/* New Units Required Field */}
+                    <div>
+                        <label className="block text-gray-700 font-semibold mb-2">Units Required (1-10)</label>
+                        <input
+                            type="number"
+                            name="unitsRequired"
+                            min="1"
+                            max="10"
+                            value={formData.unitsRequired}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            required
+                        />
+                    </div>
+
+                    {/* New Additional Info Field */}
+                    <div>
+                        <label className="block text-gray-700 font-semibold mb-2">Additional Information</label>
+                        <textarea
+                            name="additionalInfo"
+                            value={formData.additionalInfo}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            rows="3"
+                            placeholder="Any special requirements or notes for donors..."
                         />
                     </div>
                     
