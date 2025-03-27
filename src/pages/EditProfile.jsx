@@ -13,7 +13,7 @@ const EditProfile = () => {
       email: '',
       bloodGroup: '',
       location: '',
-      contactNumber: '',
+      contact: '',
       isDonor: false
     });
     
@@ -29,7 +29,7 @@ const EditProfile = () => {
           email: user.email || '',
           bloodGroup: user.bloodGroup || '',
           location: user.location || '',
-          contactNumber: user.contactNumber || '',
+          contact: user.contact || '',
           isDonor: user.isDonor || false
         });
         setIsLoading(false);
@@ -82,7 +82,7 @@ const EditProfile = () => {
             email: formData.email,
             bloodGroup: formData.bloodGroup,
             location: formData.location || undefined,
-            contactNumber: formData.contactNumber || undefined,
+            contact: formData.contact || undefined,
             isDonor: formData.isDonor
           })
         });
@@ -95,7 +95,7 @@ const EditProfile = () => {
         }
   
         const data = await response.json();
-        
+        console.log("User :", data)
         if (!response.ok) {
           throw new Error(data.message || 'Failed to update profile');
         }
@@ -234,18 +234,18 @@ const EditProfile = () => {
                 <div className="mt-1">
                   <input
                     type="tel"
-                    name="contactNumber"
-                    id="contactNumber"
-                    value={formData.contactNumber}
+                    name="contact"
+                    id="contact"
+                    value={formData.contact}
                     onChange={handleChange}
                     placeholder="Optional"
                     className={`block w-full rounded-md shadow-sm ${
-                      errors.contactNumber ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 
+                      errors.contact ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 
                       'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                     } sm:text-sm`}
                   />
-                  {errors.contactNumber && (
-                    <p className="mt-2 text-sm text-red-600">{errors.contactNumber}</p>
+                  {errors.contact && (
+                    <p className="mt-2 text-sm text-red-600">{errors.contact}</p>
                   )}
                 </div>
               </div>

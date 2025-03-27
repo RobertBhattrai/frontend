@@ -41,6 +41,7 @@ const MyRequest = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [selectedDonation, setSelectedDonation] = useState(null);
     const [showDonorModal, setShowDonorModal] = useState(false);
+    const [isModalLoading, setIsModalLoading] = useState(false); // Add this line
 
     // Fetch all data
     useEffect(() => {
@@ -57,17 +58,25 @@ const MyRequest = () => {
                 if (requestsResponse.ok) {
                     setRequests(requestsData);
                     
-                    // Fetch donations for fulfilled requests
+                    // Fetch donations for fulfilled requests only
                     const fulfilledRequests = requestsData.filter(req => req.status === 'fulfilled');
-                    if (fulfilledRequests.length > 0) {
-                        const donationsResponse = await fetch(
-                            `http://localhost:5000/api/donations?requestIds=${fulfilledRequests.map(req => req._id).join(',')}`
-                        );
-                        if (donationsResponse.ok) {
-                            const donationsData = await donationsResponse.json();
-                            setDonations(donationsData);
+                    
+                    // Fetch each donation individually
+                    const donationsPromises = fulfilledRequests.map(async (request) => {
+                        try {
+                            const response = await fetch(`http://localhost:5000/api/donations/by-request/${request._id}`);
+                            if (response.ok) {
+                                return await response.json();
+                            }
+                            return null;
+                        } catch (error) {
+                            console.error(`Error fetching donation for request ${request._id}:`, error);
+                            return null;
                         }
-                    }
+                    });
+                    
+                    const donationsResults = await Promise.all(donationsPromises);
+                    setDonations(donationsResults.filter(d => d !== null));
                     
                     // Fetch notifications
                     const notificationsResponse = await fetch(`http://localhost:5000/api/notifications/${user._id}`);
@@ -75,8 +84,6 @@ const MyRequest = () => {
                         const notificationsData = await notificationsResponse.json();
                         setNotifications(notificationsData);
                     }
-                } else {
-                    setMessage(requestsData.message || "Failed to fetch data.");
                 }
             } catch (error) {
                 setMessage("Error: " + error.message);
@@ -88,19 +95,42 @@ const MyRequest = () => {
         fetchData();
     }, [user?.username, user?._id]);
 
-    // Fetch donation details for modal
     const fetchDonationDetails = async (donationId) => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/donations/${donationId}`);
-        if (response.ok) {
+        try {
+          setIsModalLoading(true);
+          const response = await fetch(`http://localhost:5000/api/donations/${donationId}`);
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to fetch donation details');
+          }
+          
           const data = await response.json();
           setSelectedDonation(data);
           setShowDonorModal(true);
+        } catch (error) {
+          console.error('Error fetching donation:', error);
+          setMessage(`Error: ${error.message}`);
+        } finally {
+          setIsModalLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching donation:', error);
-        setMessage('Failed to load donor details');
-      }
+      };
+
+    // Get donor info for a request
+    const getDonorInfo = (requestId) => {
+         // Since donations is now an array of donations for fulfilled requests
+    const donation = donations.find(d => d?.request?._id === requestId);
+        // console.log("DONATION OBJECT",donation)
+        if (!donation || !donation.donor) return null;
+        console.log("Blood Group:", donation);
+        console.log(donation)
+        return {
+            name: donation.donor.name || 'Anonymous Donor',
+            contact: donation.donor.contact || 'contact not shared',
+            bloodGroup: donation.donor.bloodGroup || 'contact not shared',
+            donationDate: donation.donationDate ? new Date(donation.donationDate).toLocaleDateString() : 'Date not specified',
+            donationId: donation._id
+        };
     };
 
     // Handle notification click
@@ -110,9 +140,12 @@ const MyRequest = () => {
         await markNotificationAsRead(notification._id);
         setShowNotifications(false);
         
-        // If notification has a donationId, show donor details
-        if (notification.donationId) {
-          await fetchDonationDetails(notification.donationId);
+        // If notification has a requestId, find the associated donation
+        if (notification.requestId) {
+          const donation = donations.find(d => d.request === notification.requestId);
+          if (donation) {
+            await fetchDonationDetails(donation._id);
+          }
         }
       } catch (error) {
         console.error('Error handling notification:', error);
@@ -167,18 +200,6 @@ const MyRequest = () => {
             console.error("Status update error:", error);
             setMessage("Error: Failed to update status.");
         }
-    };
-
-    // Get donor info for a request
-    const getDonorInfo = (requestId) => {
-        const donation = donations.find(d => d.request === requestId);
-        if (!donation) return null;
-        
-        return {
-            name: donation.donor?.name || 'Anonymous Donor',
-            contact: donation.donor?.contact || 'Contact information not shared',
-            donationDate: new Date(donation.donationDate).toLocaleDateString()
-        };
     };
 
     // Mark notification as read
@@ -350,11 +371,43 @@ const MyRequest = () => {
                                                     }`}>
                                                         {request.status}
                                                     </span>
-                                                    {donorInfo && (
-                                                        <div className="mt-2 text-xs">
-                                                            <div>Donor: {donorInfo.name}</div>
-                                                            <div>Date: {donorInfo.donationDate}</div>
-                                                            <div>Contact: {donorInfo.contact}</div>
+                                                    {request.status === 'fulfilled' && (
+                                                        <div className="mt-2">
+                                                            {donorInfo ? (
+                                                                <>
+                                                                    <div className="text-xs">
+                                                                        <span className="font-medium">Donor:</span> {donorInfo.name}
+                                                                    </div>
+                                                                    <div className="text-xs">
+                                                                        <span className="font-medium">Date:</span> {donorInfo.donationDate}
+                                                                    </div>
+                                                                    <div className="text-xs">
+                                                                        <span className="font-medium">Contact:</span> {donorInfo.contact}
+                                                                    </div>
+                                                                    <div className="text-xs">
+                                                                        <span className="font-medium">BloodGroup:</span> {donorInfo.bloodGroup}
+                                                                    </div>
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            const donation = donations.find(d => d?.request?._id === request._id);
+                                                                            if (donation) {
+                                                                            fetchDonationDetails(donation._id);
+                                                                            }
+                                                                        }}
+                                                                        className="mt-1 text-xs text-blue-600 hover:underline"
+                                                                        >
+                                                                        View full details
+                                                                        </button>
+                                                                </>
+                                                            ) : donations.length > 0 ? (
+                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                    Donor details not available
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                    Loading donor info...
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </td>

@@ -13,6 +13,7 @@ const Register = () => {
     password: "",
     bloodGroup: "",
     isDonor: false,
+    contact: "",
   });
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -180,6 +181,19 @@ const Register = () => {
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="password" className="block text-gray-700">Contact Details</label>
+            <input
+              type="contact"
+              name="contact"
+              placeholder="Enter your phone number"
+              value={formData.contact}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
           <div className="mb-4">
